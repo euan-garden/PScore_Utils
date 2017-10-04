@@ -37,12 +37,4 @@ namespace ScoreScraper
 }
 
 
-//var postTitles =
-//    from p in rss["channel"]["item"]
-//    select (string)p["title"];
-
-//foreach(var item in postTitles)
-//{
-//    Console.WriteLine(item);
-//}
 
