@@ -6,8 +6,16 @@ namespace ScoreScraper
 {
     public class Shooter
     {
-        public string ID;
-        public string FirstName;
-        public string LastName;
+        public string matchName;
+        public string memberId;
+        public string firstName;
+        public string lastName;
+        public string fullName;
+    }
+
+    public class ShooterAgg
+    {
+        public string fullName;
+        public int matchCount;
     }
 }
