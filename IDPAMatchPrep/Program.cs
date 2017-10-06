@@ -10,9 +10,83 @@ namespace IDPAMatchPrep
         private static string webFileName = "IDPA-Data-Western-Entries.csv";
         static void Main(string[] args)
         {
-            ReadRegistreredShooterList(regFileName);
-            ReadIDPAWebShooterList(webFileName);
+            List<IDPABaseShooter> registeredShooters = ReadRegistreredShooterList(regFileName);
+            List<IDPAWebShooterDetails> webShooterInformation = ReadIDPAWebShooterList(webFileName);
+            CompareTwoShooterListsForMatch(registeredShooters, webShooterInformation);
             Console.ReadLine();
+        }
+
+        private static void CompareTwoShooterListsForMatch(List<IDPABaseShooter> registeredShooters, List<IDPAWebShooterDetails> webShooterInformation)
+        {
+            //Low Tech for now but functional
+            foreach (IDPABaseShooter aShooter in registeredShooters)
+            {
+                bool foundNumberMatch = false;
+                bool foundFirstNameMatch = false;
+                bool foundLastNameMatch = false;
+                foreach (IDPAWebShooterDetails webShooter in webShooterInformation)
+                {
+                    if (aShooter.memberNumber.ToUpper() == webShooter.memberNumber.ToUpper())
+                    {
+                        foundNumberMatch = true; 
+                        if (NameMatch(aShooter.lastName, webShooter.lastName))
+                        {
+                            foundLastNameMatch = true;
+                            if (NameMatch(aShooter.firstName, webShooter.firstName))
+                            {
+                                foundFirstNameMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                //TODO: Need to do a better job here in terms of reporting failures so they can be eyeballed
+                if (!foundNumberMatch)
+                {
+                    Console.WriteLine("No number match: " + aShooter.memberNumber.ToString() + ", " + aShooter.lastName + ", " + aShooter.firstName);
+                }
+                if (!foundFirstNameMatch)
+                {
+                    Console.WriteLine("Number but no first name match: " + aShooter.memberNumber.ToString() + ", " + aShooter.lastName + ", " + aShooter.firstName);
+                }
+                if (!foundLastNameMatch)
+                {
+                    Console.WriteLine("Number but no last name match: " + aShooter.memberNumber.ToString() + ", " + aShooter.lastName + ", " + aShooter.firstName);
+                }
+
+                foundNumberMatch = false;
+                foundFirstNameMatch = false;
+                foundLastNameMatch = false;
+            }
+        }
+
+        private static bool NameMatch(string A, string B)
+        {
+            bool result = false;
+            string upperA = A.ToUpper();
+            string upperB = B.ToUpper();
+            if (upperA == upperB)
+            {
+                result = true;
+            }
+            else
+            {
+                int searchIndex = upperB.IndexOf(upperA);
+                if (searchIndex >= 0)
+                {
+                    result = true;
+                }
+                else
+                {
+                    searchIndex = upperB.IndexOf(upperA);
+                    if (searchIndex >= 0)
+                    {
+                        result = true;
+                    }
+                }
+            }
+            return result;
         }
 
         private static List<IDPABaseShooter> ReadRegistreredShooterList(string fileName)
