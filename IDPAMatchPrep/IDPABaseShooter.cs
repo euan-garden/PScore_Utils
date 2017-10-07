@@ -31,4 +31,21 @@ namespace IDPAMatchPrep
         public DateTime lastREV;
         public DateTime lastBUG;
     }
+
+    public class ShooterErrorRec
+    {
+        public IDPABaseShooter baseShooter;
+        public IDPAWebShooterDetails webShooter;
+        public string errorMsg;
+        public ErrorClass eClass;
+    }
+
+    public enum ErrorClass
+    {
+        Number,
+        FirstName,
+        LastName
+    };
 }
+
+

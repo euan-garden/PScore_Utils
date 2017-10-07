@@ -18,46 +18,98 @@ namespace IDPAMatchPrep
 
         private static void CompareTwoShooterListsForMatch(List<IDPABaseShooter> registeredShooters, List<IDPAWebShooterDetails> webShooterInformation)
         {
-            //Low Tech for now but functional
+            List<ShooterErrorRec> errRec = new List<ShooterErrorRec>();
+            bool numberMatch = false;
+            bool firstNameMatch = false;
+            bool lastNameMatch = false;
+
             foreach (IDPABaseShooter aShooter in registeredShooters)
             {
-                bool foundNumberMatch = false;
-                bool foundFirstNameMatch = false;
-                bool foundLastNameMatch = false;
                 foreach (IDPAWebShooterDetails webShooter in webShooterInformation)
                 {
-                    if (aShooter.memberNumber.ToUpper() == webShooter.memberNumber.ToUpper())
+                    if (aShooter.memberNumber.ToUpper() == webShooter.memberNumber.ToUpper()) {
+                        numberMatch = true;
+                    }
+                    if (NameMatch(aShooter.lastName, webShooter.lastName)){
+                        lastNameMatch = true;
+                    }
+                    if (NameMatch(aShooter.firstName, webShooter.firstName)) {
+                        firstNameMatch = true;
+                    }
+
+                    if (numberMatch) 
                     {
-                        foundNumberMatch = true; 
-                        if (NameMatch(aShooter.lastName, webShooter.lastName))
+                        if ((lastNameMatch) && (firstNameMatch))
                         {
-                            foundLastNameMatch = true;
-                            if (NameMatch(aShooter.firstName, webShooter.firstName))
+                            break;
+                        }
+                        else if (!(lastNameMatch) && (firstNameMatch))
+                        {
+                            if (!firstNameMatch)
                             {
-                                foundFirstNameMatch = true;
-                                break;
+                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.FirstName, "Failed to match first name");
+                                errRec.Add(rec);
                             }
+                            else if (!lastNameMatch)
+                            {
+                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.LastName, "Failed to match last name");
+                                errRec.Add(rec);
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            if (!firstNameMatch)
+                            {
+                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.FirstName, "Failed to match first name");
+                                errRec.Add(rec);
+                            }
+                            if (!lastNameMatch)
+                            {
+                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.LastName, "Failed to match last name");
+                                errRec.Add(rec);
+                            }
+                            break;
                         }
                     }
                 }
+                if (!numberMatch)
+                {
+                    ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, null, ErrorClass.Number, "Failed to match member number");
+                    errRec.Add(rec);
+                }
+                numberMatch = false;
+                firstNameMatch = false;
+                lastNameMatch = false;
+            }
+            if (errRec.Count > 0)
+            {
+                ComparisonRecordErrHandler(errRec);
+            }
+        }
 
-                //TODO: Need to do a better job here in terms of reporting failures so they can be eyeballed
-                if (!foundNumberMatch)
-                {
-                    Console.WriteLine("No number match: " + aShooter.memberNumber.ToString() + ", " + aShooter.lastName + ", " + aShooter.firstName);
-                }
-                if (!foundFirstNameMatch)
-                {
-                    Console.WriteLine("Number but no first name match: " + aShooter.memberNumber.ToString() + ", " + aShooter.lastName + ", " + aShooter.firstName);
-                }
-                if (!foundLastNameMatch)
-                {
-                    Console.WriteLine("Number but no last name match: " + aShooter.memberNumber.ToString() + ", " + aShooter.lastName + ", " + aShooter.firstName);
-                }
+        private static ShooterErrorRec CreateShooterComparisonErrorRecord(IDPABaseShooter aShooter, IDPAWebShooterDetails webShooter, ErrorClass eClass, string errMsg)
+        {
+            ShooterErrorRec rec = new ShooterErrorRec();
+            rec.baseShooter = aShooter;
+            rec.webShooter = webShooter;
+            rec.eClass = eClass;
+            rec.errorMsg = errMsg;
+            return rec;
+        }
 
-                foundNumberMatch = false;
-                foundFirstNameMatch = false;
-                foundLastNameMatch = false;
+        private static void ComparisonRecordErrHandler(List<ShooterErrorRec> errRec)
+        {
+            foreach (ShooterErrorRec err in errRec)
+            {
+                string compareString = "";
+                if (err.webShooter != null)
+                {
+                    compareString = err.baseShooter.memberNumber + ", " + err.baseShooter.firstName + ", " + err.baseShooter.lastName + " : " +
+                                    err.webShooter.memberNumber + ", " + err.webShooter.firstName + ", " + err.webShooter.lastName;
+                }
+                Console.WriteLine(compareString);
+                Console.WriteLine("   " + err.errorMsg);
             }
         }
 
@@ -79,7 +131,7 @@ namespace IDPAMatchPrep
                 }
                 else
                 {
-                    searchIndex = upperB.IndexOf(upperA);
+                    searchIndex = upperA.IndexOf(upperB);
                     if (searchIndex >= 0)
                     {
                         result = true;
