@@ -14,6 +14,7 @@ namespace ScoreScraper
         private static string userAgent = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; .NET CLR 1.0.3705;)";
         private static string uriPrefix = "https://s3.amazonaws.com/ps-scores/production/";
         private static string uriSuffix = "/match_def.json";
+        private static int matchStringLength = 36;
 
         static void Main(string[] args)
         {
@@ -30,10 +31,12 @@ namespace ScoreScraper
             {
                 Console.WriteLine("Getting data for each match");
                 int loopCount = 1;
+                string shortMatchID;
                 foreach (string matchID in matches)
                 {
+                    shortMatchID = matchID.Substring(0,matchStringLength);
                     Console.WriteLine("     Getting match " + loopCount.ToString());
-                    shooterData.AddRange(GetSingleMatch(matchID));
+                    shooterData.AddRange(GetSingleMatch(shortMatchID));
                     loopCount++;
                 }
             }
@@ -148,30 +151,40 @@ namespace ScoreScraper
             client.Headers.Add("user-agent", userAgent);
 
             string data = client.DownloadString(sourceUri);
-
+            List<Shooter> typedShooters = new List<Shooter>();
             //Parse the JSON so we can use LINQ Query Syntax over it
             //Get all the shooter registration data from the match and distill down to name(s), number and add in the match name
-            JObject shooterData = JObject.Parse(data);
-            string matchTitle = shooterData["match_name"].ToString();
-            var shooters =
-                from s in shooterData["match_shooters"]
-                select new { lastName = (string)s["sh_ln"], firstName = (string)s["sh_fn"], memberId = (string)s["sh_id"], matchName = matchTitle };
-
-            //Weird side effect of using anonymous types, they can not be returned from methods so we have to construct a collection of typed classes
-            //that can be returned. Use a List<T> because it is simple and efficient and lets us use LINQ Query syntax later.
-            //Shooter class is created so it can contain the data in a strongly typed way.
-            List<Shooter> typedShooters = new List<Shooter>();
-            if (shooters != null)
+            try
             {
-                foreach (var shtr in shooters)
+                JObject shooterData = JObject.Parse(data);
+                string matchTitle = shooterData["match_name"].ToString();
+                var shooters =
+                    from s in shooterData["match_shooters"]
+                    select new { lastName = (string)s["sh_ln"], firstName = (string)s["sh_fn"], memberId = (string)s["sh_id"], matchName = matchTitle };
+
+                //Weird side effect of using anonymous types, they can not be returned from methods so we have to construct a collection of typed classes
+                //that can be returned. Use a List<T> because it is simple and efficient and lets us use LINQ Query syntax later.
+                //Shooter class is created so it can contain the data in a strongly typed way.
+
+                if (shooters != null)
                 {
-                    Shooter thisShooter = new Shooter();
-                    thisShooter.matchName = shtr.matchName;
-                    thisShooter.memberId = shtr.memberId;
-                    thisShooter.firstName = shtr.firstName;
-                    thisShooter.lastName = shtr.lastName;
-                    thisShooter.fullName = shtr.lastName + ", " + shtr.firstName;
-                    typedShooters.Add(thisShooter);
+                    foreach (var shtr in shooters)
+                    {
+                        Shooter thisShooter = new Shooter();
+                        thisShooter.matchName = shtr.matchName;
+                        thisShooter.memberId = shtr.memberId;
+                        thisShooter.firstName = shtr.firstName;
+                        thisShooter.lastName = shtr.lastName;
+                        thisShooter.fullName = shtr.lastName + ", " + shtr.firstName;
+                        typedShooters.Add(thisShooter);
+                    }
+                }
+            }
+            catch(Exception e){
+                Console.WriteLine("Problem reading the Json: " + e.Message);
+                using (var writer = File.CreateText(matchID + "_ErrorResults.json"))
+                {
+                    writer.Write(data);
                 }
             }
             return typedShooters;

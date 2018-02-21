@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 
 namespace IDPAMatchPrep
 {
@@ -39,36 +40,11 @@ namespace IDPAMatchPrep
 
                     if (numberMatch) 
                     {
-                        if ((lastNameMatch) && (firstNameMatch))
+                        if ((firstNameMatch) && (lastNameMatch)) { break; }
+                        if ((!firstNameMatch) || (!lastNameMatch))
                         {
-                            break;
-                        }
-                        else if (!(lastNameMatch) && (firstNameMatch))
-                        {
-                            if (!firstNameMatch)
-                            {
-                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.FirstName, "Failed to match first name");
-                                errRec.Add(rec);
-                            }
-                            else if (!lastNameMatch)
-                            {
-                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.LastName, "Failed to match last name");
-                                errRec.Add(rec);
-                            }
-                            break;
-                        }
-                        else
-                        {
-                            if (!firstNameMatch)
-                            {
-                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.FirstName, "Failed to match first name");
-                                errRec.Add(rec);
-                            }
-                            if (!lastNameMatch)
-                            {
-                                ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.LastName, "Failed to match last name");
-                                errRec.Add(rec);
-                            }
+                            ShooterErrorRec rec = CreateShooterComparisonErrorRecord(aShooter, webShooter, ErrorClass.Name, "Failed to match name");
+                            errRec.Add(rec);
                             break;
                         }
                     }
@@ -100,16 +76,38 @@ namespace IDPAMatchPrep
 
         private static void ComparisonRecordErrHandler(List<ShooterErrorRec> errRec)
         {
+            const int MAXSTRINGPERERROR = 150;
+
+            StringBuilder sb = new StringBuilder();
+            sb.Capacity = MAXSTRINGPERERROR;
             foreach (ShooterErrorRec err in errRec)
             {
-                string compareString = "";
                 if (err.webShooter != null)
                 {
-                    compareString = err.baseShooter.memberNumber + ", " + err.baseShooter.firstName + ", " + err.baseShooter.lastName + " : " +
-                                    err.webShooter.memberNumber + ", " + err.webShooter.firstName + ", " + err.webShooter.lastName;
+                    sb.Append(err.baseShooter.memberNumber);
+                    sb.Append(", ");
+                    sb.Append(err.baseShooter.firstName);
+                    sb.Append(", ");
+                    sb.Append(err.baseShooter.lastName);
+                    sb.Append(" : ");
+                    sb.Append(err.webShooter.memberNumber);
+                    sb.Append(", ");
+                    sb.Append(err.webShooter.firstName);
+                    sb.Append(", ");
+                    sb.Append(err.webShooter.lastName);
                 }
-                Console.WriteLine(compareString);
+                else
+                {
+                    sb.Append(err.baseShooter.memberNumber);
+                    sb.Append(", ");
+                    sb.Append(err.baseShooter.firstName);
+                    sb.Append(", ");
+                    sb.Append(err.baseShooter.lastName);
+                    sb.Append(" : <<NULL>>");
+                }
+                Console.WriteLine(sb);
                 Console.WriteLine("   " + err.errorMsg);
+                sb.Clear();
             }
         }
 
@@ -209,10 +207,7 @@ namespace IDPAMatchPrep
             {
                 result = Convert.ToDateTime(source);
             }
-
             return result;
         }
     }
-
-    
 }

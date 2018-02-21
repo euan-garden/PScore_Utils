@@ -2,17 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace IDPAMatchPrep
+namespace ShooterUtils
 {
-    public class IDPABaseShooter
-    {
-        public string firstName;
-        public string lastName;
-        public string memberNumber;
-        public string shooterDivision;
-        public string shooterClass;
-    }
-
     public class IDPAWebShooterDetails : IDPABaseShooter
     {
         public string status;
@@ -31,20 +22,4 @@ namespace IDPAMatchPrep
         public DateTime lastREV;
         public DateTime lastBUG;
     }
-
-    public class ShooterErrorRec
-    {
-        public IDPABaseShooter baseShooter;
-        public IDPAWebShooterDetails webShooter;
-        public string errorMsg;
-        public ErrorClass eClass;
-    }
-
-    public enum ErrorClass
-    {
-        Number,
-        Name
-    };
 }
-
-
